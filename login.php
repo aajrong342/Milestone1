@@ -28,18 +28,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (intval($responseKeys["success"]) !== 1) {
         $error = "Please complete the CAPTCHA.";
     } else {
-        // Prepare and execute SQL statement to retrieve hashed password and role for the provided username
-        $stmt = $conn->prepare("SELECT password, role FROM users WHERE username = ?");
+        // Prepare and execute SQL statement to retrieve hashed password, salt, and role for the provided username
+        $stmt = $conn->prepare("SELECT password, salt, role FROM users WHERE username = ?");
         $stmt->bind_param("s", $username);
         $stmt->execute();
         $stmt->store_result();
 
         if ($stmt->num_rows == 1) {
-            $stmt->bind_result($hashedPassword, $role);
+            $stmt->bind_result($hashedPassword, $salt, $role);
             $stmt->fetch();
 
             // Verify the provided password against the hashed password from the database
-            if (password_verify($password, $hashedPassword)) {
+            $saltedPassword = $password . $salt;
+            if (password_verify($saltedPassword, $hashedPassword)) {
                 // Password is correct, set session variables
                 $_SESSION['loggedin'] = true;
                 $_SESSION['username'] = $username;

@@ -27,15 +27,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $error = '';
 
     if ($password !== $confirmPassword) {
-      $error = 'Passwords do not match.';
-  } else {
-      // Generate a random salt
-      $salt = bin2hex(random_bytes(4));
-      // Combine the salt with the password
-      $saltedPassword = $password . $salt;
-      // Hash the combined salted password
-      $hashedPassword = password_hash($saltedPassword, PASSWORD_BCRYPT);
-    
+        $error = 'Passwords do not match.';
+    } else {
+        // Generate a random salt
+        $salt = bin2hex(random_bytes(5));
+        // Combine the salt with the password
+        $saltedPassword = $password . $salt;
+        // Hash the combined salted password
+        $hashedPassword = password_hash($saltedPassword, PASSWORD_BCRYPT);
+
         // Validate and upload profile photo
         $allowedMimeTypes = ['image/jpeg'];
         $allowedExtensions = ['jpg', 'jpeg'];
@@ -127,6 +127,11 @@ $conn->close();
       margin-bottom: 20px;
     }
   </style>
+  <script>
+    function confirmSubmission() {
+      return confirm('Are you sure that you\\'ve put down all the correct information?');
+    }
+  </script>
 </head>
 <body>
   <div class="container">
@@ -134,7 +139,7 @@ $conn->close();
     <?php if (isset($error)) { ?>
       <p class="error"><?php echo $error; ?></p>
     <?php } ?>
-    <form id="registrationForm" method="POST" action="registration.php" enctype="multipart/form-data">
+    <form id="registrationForm" method="POST" action="registration.php" enctype="multipart/form-data" onsubmit="return confirmSubmission()">
       <div class="form-group">
         <label for="username">Username:</label>
         <input type="text" id="username" name="username" required>
