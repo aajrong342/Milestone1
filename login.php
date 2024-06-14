@@ -46,8 +46,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $_SESSION['username'] = $username;
                 $_SESSION['role'] = $role;
 
-                // Redirect to the admin page
-                header("Location: admin.php");
+                // Redirect based on role
+                if ($role === 'user') {
+                    header("Location: welcome.php");
+                } else {
+                    header("Location: admin.php");
+                }
                 exit;
             } else {
                 $error = "Invalid username or password.";
