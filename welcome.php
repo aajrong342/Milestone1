@@ -6,6 +6,33 @@ if (!isset($_SESSION['loggedin'])) {
     header('Location: login.php');
     exit;
 }
+
+// Database connection settings
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "userDB";
+
+// Create connection
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// Retrieve the profile photo for the logged-in user
+$stmt = $conn->prepare("SELECT profilePhoto FROM users WHERE username = ?");
+$stmt->bind_param("s", $_SESSION['username']);
+$stmt->execute();
+$stmt->bind_result($profilePhoto);
+$stmt->fetch();
+$stmt->close();
+$conn->close();
+
+// Convert the binary data to a base64-encoded string
+$profilePhotoData = base64_encode($profilePhoto);
+$profilePhotoSrc = 'data:image/jpeg;base64,' . $profilePhotoData;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -26,7 +53,7 @@ if (!isset($_SESSION['loggedin'])) {
       text-align: right;
     }
     .header img {
-      max-width: 50px;
+      max-width: 200px;
       border-radius: 50%;
       cursor: pointer;
       transition: transform 0.3s ease-in-out;
@@ -47,7 +74,7 @@ if (!isset($_SESSION['loggedin'])) {
 <body>
   <div class="header">
     <!-- Image in the top right corner, clickable -->
-    <a href="profile.php"><img src="placeholder.png" alt="User Image"></a>
+    <a href="profile.php"><img src="<?php echo $profilePhotoSrc; ?>" alt="User Image"></a>
   </div>
 
   <div class="welcome-container">

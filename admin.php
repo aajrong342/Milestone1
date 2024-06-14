@@ -1,18 +1,45 @@
 <?php
 session_start();
 
-// Check if the user is logged in and is an admin
-if (!isset($_SESSION['loggedin']) || $_SESSION['role'] !== 'admin') {
-    header('Location: login.php'); // Redirect to the login page
+// Check if user is logged in
+if (!isset($_SESSION['loggedin'])) {
+    header('Location: login.php');
     exit;
 }
+
+// Database connection settings
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "userDB";
+
+// Create connection
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// Retrieve the profile photo for the logged-in user
+$stmt = $conn->prepare("SELECT profilePhoto FROM users WHERE username = ?");
+$stmt->bind_param("s", $_SESSION['username']);
+$stmt->execute();
+$stmt->bind_result($profilePhoto);
+$stmt->fetch();
+$stmt->close();
+$conn->close();
+
+// Convert the binary data to a base64-encoded string
+$profilePhotoData = base64_encode($profilePhoto);
+$profilePhotoSrc = 'data:image/jpeg;base64,' . $profilePhotoData;
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin</title>
+  <title>Welcome</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -26,7 +53,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['role'] !== 'admin') {
       text-align: right;
     }
     .header img {
-      max-width: 50px;
+      max-width: 200px;
       border-radius: 50%;
       cursor: pointer;
       transition: transform 0.3s ease-in-out;
@@ -42,24 +69,12 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['role'] !== 'admin') {
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       padding: 20px;
     }
-    .return-button {
-      display: inline-block;
-      padding: 10px 20px;
-      background-color: #007bff;
-      color: white;
-      text-decoration: none;
-      border-radius: 5px;
-      transition: background-color 0.3s ease-in-out;
-    }
-    .return-button:hover {
-      background-color: #0056b3;
-    }
   </style>
 </head>
 <body>
   <div class="header">
     <!-- Image in the top right corner, clickable -->
-    <a href="profile.php"><img src="placeholder.png" alt="User Image"></a>
+    <a href="profile.php"><img src="<?php echo $profilePhotoSrc; ?>" alt="User Image"></a>
   </div>
 
   <div class="welcome-container">
