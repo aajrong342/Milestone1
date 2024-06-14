@@ -27,10 +27,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $error = '';
 
     if ($password !== $confirmPassword) {
-        $error = 'Passwords do not match.';
-    } else {
-        $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-
+      $error = 'Passwords do not match.';
+  } else {
+      // Generate a random salt
+      $salt = bin2hex(random_bytes(16));
+      // Combine the salt with the password
+      $saltedPassword = $password . $salt;
+      // Hash the combined salted password
+      $hashedPassword = password_hash($saltedPassword, PASSWORD_BCRYPT);
+    
         // Validate and upload profile photo
         $allowedMimeTypes = ['image/jpeg'];
         $allowedExtensions = ['jpg', 'jpeg'];
@@ -40,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if (in_array($detectedMimeType, $allowedMimeTypes) && in_array($fileExtension, $allowedExtensions)) {
             if ($profilePhoto['error'] == UPLOAD_ERR_OK && is_uploaded_file($profilePhoto['tmp_name'])) {
                 $photoContent = addslashes(file_get_contents($profilePhoto['tmp_name']));
-                $sql = "INSERT INTO users (fullName, username, email, phone, password, profilePhoto, role) VALUES ('$fullName', '$username', '$email', '$phone', '$hashedPassword', '$photoContent', '$role')";
+                $sql = "INSERT INTO users (fullName, username, email, phone, password, salt, profilePhoto, role) VALUES ('$fullName', '$username', '$email', '$phone', '$hashedPassword', '$salt', '$photoContent', '$role')";
 
                 if ($conn->query($sql) === TRUE) {
                     echo "<script>
@@ -63,7 +68,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 $conn->close();
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
