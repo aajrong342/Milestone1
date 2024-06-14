@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
       $error = 'Passwords do not match.';
   } else {
       // Generate a random salt
-      $salt = bin2hex(random_bytes(16));
+      $salt = bin2hex(random_bytes(4));
       // Combine the salt with the password
       $saltedPassword = $password . $salt;
       // Hash the combined salted password
