@@ -104,7 +104,7 @@ $conn->close();
     input[type="tel"],
     input[type="password"],
     input[type="file"] {
-      width: 100%;
+      width: 90%;
       padding: 10px;
       border: 1px solid #ccc;
       border-radius: 5px;
