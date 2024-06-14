@@ -33,6 +33,11 @@ $conn->close();
 // Convert the binary data to a base64-encoded string
 $profilePhotoData = base64_encode($profilePhoto);
 $profilePhotoSrc = 'data:image/jpeg;base64,' . $profilePhotoData;
+
+// Prevent page caching
+header("Cache-Control: no-cache, no-store, must-revalidate");
+header("Pragma: no-cache");
+header("Expires: 0");
 ?>
 <!DOCTYPE html>
 <html lang="en">

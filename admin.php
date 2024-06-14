@@ -82,5 +82,15 @@ $profilePhotoSrc = 'data:image/jpeg;base64,' . $profilePhotoData;
     <p>You have successfully logged in.</p>
     <a href="logout.php" class="return-button">Logout</a>
   </div>
+  <script>
+    // Disable back button functionality
+    history.pushState(null, null, location.href);
+    window.onpopstate = function () {
+        history.go(1);
+    };
+
+    // Ensure that the user cannot navigate back
+    window.location.replace("#");
+</script>
 </body>
 </html>

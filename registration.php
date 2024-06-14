@@ -26,7 +26,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $role = 'user'; // Default role
     $error = '';
 
-    if ($password !== $confirmPassword) {
+    // Validate email
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = 'Invalid email format.';
+    }
+    // Validate phone number (format: 123-456-7890)
+    elseif (!preg_match("/^\d{3}-\d{3}-\d{4}$/", $phone)) {
+        $error = 'Invalid phone number format. Use format: 917-456-7890.';
+    }
+    // Validate password
+    elseif ($password !== $confirmPassword) {
         $error = 'Passwords do not match.';
     } else {
         // Generate a random salt
@@ -47,15 +56,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $photoContent = addslashes(file_get_contents($profilePhoto['tmp_name']));
                 $sql = "INSERT INTO users (fullName, username, email, phone, password, salt, profilePhoto, role) VALUES ('$fullName', '$username', '$email', '$phone', '$hashedPassword', '$salt', '$photoContent', '$role')";
 
-                if ($conn->query($sql) === TRUE) {
-                    echo "<script>
-                            if (confirm('Are you sure that you\\'ve put down all the correct information?')) {
-                                window.location.href = 'login.php';
-                            }
-                          </script>";
-                    exit;
-                } else {
-                    $error = 'Failed to save user data: ' . $conn->error;
+if ($conn->query($sql) === TRUE) {
+    echo "<script>
+            if (confirm('Are you sure that you\\'ve put down all the correct information?')) {
+                window.location.href = 'login.php';
+            } else {
+                window.location.href = 'registration.php'; // Redirect back to registration page
+            }
+          </script>";
+    exit;
+} else {
+    $error = 'Failed to save user data: ' . $conn->error;
                 }
             } else {
                 $error = 'Profile photo upload error.';
