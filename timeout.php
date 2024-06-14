@@ -37,7 +37,7 @@ unset($_SESSION['login_attempts']);
 <body>
     <div class="message">
         <h2>HOY TIMEOUT</h2>
-        <p>AYAN KASI YOU SHOULD REMEMBER YOU USERNAME AND PASSWORK</p>
+        <p>AYAN KASI YOU SHOULD REMEMBER YOU USERNAME AND PASSWORD</p>
         <p>Please wait for a moment pls...</p>
     </div>
 </body>
