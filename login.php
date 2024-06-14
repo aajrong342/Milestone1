@@ -2,10 +2,11 @@
 session_start();
 
 // Database connection settings
-$servername = "localhost"; // Change this if your database is hosted elsewhere
-$username = "root"; // Change this to your database username
-$password = ""; // Change this to your database password
-$dbname = "userDB"; // Change this to your database name
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "userDB";
+$recaptchaSecret = '6LdfdPcpAAAAAO_UYnv5Gb9nKqxq7Zb37d4aQLjr';
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);
@@ -18,25 +19,43 @@ if ($conn->connect_error) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = $_POST['username'];
     $password = $_POST['password'];
+    $recaptchaResponse = $_POST['g-recaptcha-response'];
 
-    // Prepare SQL statement to retrieve hashed password for the provided username
-    $sql = "SELECT password FROM users WHERE fullName = '$username'";
-    $result = $conn->query($sql);
+    // Verify the CAPTCHA response
+    $response = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=$recaptchaSecret&response=$recaptchaResponse");
+    $responseKeys = json_decode($response, true);
 
-    if ($result->num_rows == 1) {
-        $row = $result->fetch_assoc();
-        $hashedPassword = $row['password'];
+    if (intval($responseKeys["success"]) !== 1) {
+        $error = "Please complete the CAPTCHA.";
+    } else {
+        // Prepare and execute SQL statement to retrieve hashed password and role for the provided username
+        $stmt = $conn->prepare("SELECT password, role FROM users WHERE username = ?");
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $stmt->store_result();
 
-        // Verify the provided password against the hashed password from the database
-        if (password_verify($password, $hashedPassword)) {
-            // Password is correct, redirect to dashboard or wherever you want
-            header("Location: admin.php");
-            exit;
+        if ($stmt->num_rows == 1) {
+            $stmt->bind_result($hashedPassword, $role);
+            $stmt->fetch();
+
+            // Verify the provided password against the hashed password from the database
+            if (password_verify($password, $hashedPassword)) {
+                // Password is correct, set session variables
+                $_SESSION['loggedin'] = true;
+                $_SESSION['username'] = $username;
+                $_SESSION['role'] = $role;
+
+                // Redirect to the admin page
+                header("Location: admin.php");
+                exit;
+            } else {
+                $error = "Invalid username or password.";
+            }
         } else {
             $error = "Invalid username or password.";
         }
-    } else {
-        $error = "Invalid username or password.";
+
+        $stmt->close();
     }
 }
 
@@ -50,11 +69,6 @@ $conn->close();
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login</title>
   <style>
-    /* Your existing CSS */
-  </style>
-  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-</head>
-<style>
     body {
       font-family: Arial, sans-serif;
       background-color: #f4f4f4;
@@ -103,6 +117,8 @@ $conn->close();
       margin-bottom: 20px;
     }
   </style>
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+</head>
 <body>
   <div class="container">
     <h2>Login</h2>

@@ -17,43 +17,53 @@ if ($conn->connect_error) {
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $fullName = $_POST['fullName'];
+    $username = $_POST['username'];
     $email = $_POST['email'];
     $phone = $_POST['phone'];
-    $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
+    $password = $_POST['password'];
+    $confirmPassword = $_POST['confirmPassword'];
     $profilePhoto = $_FILES['profilePhoto'];
-
-    // Validate and upload profile photo
-    $allowedMimeTypes = ['image/jpeg'];
-    $allowedExtensions = ['jpg', 'jpeg'];
-    $detectedMimeType = mime_content_type($profilePhoto['tmp_name']);
-    $fileExtension = strtolower(pathinfo($profilePhoto['name'], PATHINFO_EXTENSION));
+    $role = 'user'; // Default role
     $error = '';
 
-    if (in_array($detectedMimeType, $allowedMimeTypes) && in_array($fileExtension, $allowedExtensions)) {
-        if ($profilePhoto['error'] == UPLOAD_ERR_OK && is_uploaded_file($profilePhoto['tmp_name'])) {
-            $photoContent = addslashes(file_get_contents($profilePhoto['tmp_name']));
-            $sql = "INSERT INTO users (fullName, email, phone, password, profilePhoto) VALUES ('$fullName', '$email', '$phone', '$password', '$photoContent')";
+    if ($password !== $confirmPassword) {
+        $error = 'Passwords do not match.';
+    } else {
+        $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
-            if ($conn->query($sql) === TRUE) {
-                echo "<script>
-                        if (confirm('Are you sure that you\\'ve put down all the correct information?')) {
-                            window.location.href = 'login.php';
-                        }
-                      </script>";
-                exit;
+        // Validate and upload profile photo
+        $allowedMimeTypes = ['image/jpeg'];
+        $allowedExtensions = ['jpg', 'jpeg'];
+        $detectedMimeType = mime_content_type($profilePhoto['tmp_name']);
+        $fileExtension = strtolower(pathinfo($profilePhoto['name'], PATHINFO_EXTENSION));
+
+        if (in_array($detectedMimeType, $allowedMimeTypes) && in_array($fileExtension, $allowedExtensions)) {
+            if ($profilePhoto['error'] == UPLOAD_ERR_OK && is_uploaded_file($profilePhoto['tmp_name'])) {
+                $photoContent = addslashes(file_get_contents($profilePhoto['tmp_name']));
+                $sql = "INSERT INTO users (fullName, username, email, phone, password, profilePhoto, role) VALUES ('$fullName', '$username', '$email', '$phone', '$hashedPassword', '$photoContent', '$role')";
+
+                if ($conn->query($sql) === TRUE) {
+                    echo "<script>
+                            if (confirm('Are you sure that you\\'ve put down all the correct information?')) {
+                                window.location.href = 'login.php';
+                            }
+                          </script>";
+                    exit;
+                } else {
+                    $error = 'Failed to save user data: ' . $conn->error;
+                }
             } else {
-                $error = 'Failed to save user data: ' . $conn->error;
+                $error = 'Profile photo upload error.';
             }
         } else {
-            $error = 'Profile photo upload error.';
+            $error = 'Invalid file type. Only JPG files are allowed.';
         }
-    } else {
-        $error = 'Invalid file type. Only JPG files are allowed.';
     }
 }
 
 $conn->close();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -122,6 +132,18 @@ $conn->close();
     <?php } ?>
     <form id="registrationForm" method="POST" action="registration.php" enctype="multipart/form-data">
       <div class="form-group">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required>
+      </div>
+      <div class="form-group">
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+      </div>
+      <div class="form-group">
+        <label for="confirmPassword">Confirm Password:</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" required>
+      </div>
+      <div class="form-group">
         <label for="fullName">Full Name:</label>
         <input type="text" id="fullName" name="fullName" required>
       </div>
@@ -133,10 +155,6 @@ $conn->close();
         <label for="phone">Phone Number:</label>
         <input type="tel" id="phone" name="phone" pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" required>
         <small>Format: 123-456-7890</small>
-      </div>
-      <div class="form-group">
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required>
       </div>
       <div class="form-group">
         <label for="profilePhoto">Profile Photo:</label>
