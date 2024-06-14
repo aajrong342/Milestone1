@@ -1,6 +1,26 @@
 <?php
 session_start();
 
+// Maximum number of login attempts
+$maxLoginAttempts = 3;
+
+// Check if the user has exceeded the maximum number of login attempts
+if (isset($_SESSION['login_attempts']) && $_SESSION['login_attempts'] >= $maxLoginAttempts) {
+    // Redirect the user to the timeout page
+    header('Location: timeout.php');
+    exit;
+}
+
+// Increment login attempts
+if (isset($_SESSION['login_attempts'])) {
+    $_SESSION['login_attempts']++;
+} else {
+    $_SESSION['login_attempts'] = 1;
+}
+
+// Remaining login attempts
+$remainingAttempts = $maxLoginAttempts - $_SESSION['login_attempts'];
+
 // Database connection settings
 $servername = "localhost";
 $username = "root";
